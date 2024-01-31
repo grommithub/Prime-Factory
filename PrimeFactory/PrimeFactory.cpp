@@ -20,7 +20,7 @@ inline bool no_common_factors(int num, std::vector<int>& primes)
 }
 
 
-std::chrono::duration<double> TimeFunction(std::function<void(void)> func)
+std::chrono::duration<double> benchmark(std::function<void(void)> func)
 {
 	auto start_time = std::chrono::high_resolution_clock::now();
 	func();
@@ -56,7 +56,7 @@ int main()
 	}
 	auto end_time = std::chrono::high_resolution_clock::now();
 
-	std::cout << "Par time : " << TimeFunction([primes]() { std::for_each(std::execution::par, primes.begin(), primes.end(), [](const auto p) { std::cout << std::to_string(p) + '\n'; }); });
+	std::cout << "Par time : " << benchmark([primes]() { std::for_each(std::execution::par, primes.begin(), primes.end(), [](const auto p) { std::cout << std::to_string(p) + '\n'; }); });
 
 
 

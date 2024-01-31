@@ -129,9 +129,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="PrimeFactory.cpp" />
+    <ClCompile Include="ThreadedPrimeFinder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PrimeFactory.h" />
+    <ClInclude Include="ThreadedPrimeFinder.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
