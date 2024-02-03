@@ -14,10 +14,8 @@
 #include <functional>
 
 
-inline bool no_common_factors(int num, std::vector<int>& primes)
-{
-	return std::none_of(primes.begin(), std::find_if(primes.begin(), primes.end(), [num](auto a) { return a * a > num; }), [num](unsigned int a) { return num % a == 0; });
-}
+#include "ThreadedPrimeFinder.h"
+
 
 
 std::chrono::duration<double> benchmark(std::function<void(void)> func)
@@ -31,32 +29,48 @@ std::chrono::duration<double> benchmark(std::function<void(void)> func)
 
 int main()
 {
-
 	std::vector<int> primes;
-	primes.push_back(2);
-	primes.push_back(3);
 
-	primes.reserve(100'000);
-
-	auto start_time = std::chrono::high_resolution_clock::now();
-
-	for (int i = 6; i < 1'000'000; i += 6)
-	{
-		for (int j = -1; j <= 1; j += 2)
+	std::cout << benchmark(
+		[&primes]()
 		{
-			if (no_common_factors(i + j, primes))
-			{
-				primes.push_back(i + j);
-				//if (primes.size() % 1'000'000 == 0)
-				//{
-				//	std::cout << primes.size() << " Biggest prime so far: " << primes.back() << '\n';
-				//}
-			}
+			primes = ThreadedPrimeFinder::find_all_primes(1'000'000);
 		}
-	}
-	auto end_time = std::chrono::high_resolution_clock::now();
+	).count();
 
-	std::cout << "Par time : " << benchmark([primes]() { std::for_each(std::execution::par, primes.begin(), primes.end(), [](const auto p) { std::cout << std::to_string(p) + '\n'; }); });
+	//for (auto p : primes)
+	//{
+	//	std::cout << p << '\n';
+	//}
+
+	std::cout << "\nPrimes found:" << primes.size() << '\n';
+
+
+	//std::vector<int> primes;
+	//primes.push_back(2);
+	//primes.push_back(3);
+
+	//primes.reserve(100'000);
+
+	//auto start_time = std::chrono::high_resolution_clock::now();
+
+	//for (int i = 6; i < 1'000'000; i += 6)
+	//{
+	//	for (int j = -1; j <= 1; j += 2)
+	//	{
+	//		if (no_common_factors(i + j, primes))
+	//		{
+	//			primes.push_back(i + j);
+	//			//if (primes.size() % 1'000'000 == 0)
+	//			//{
+	//			//	std::cout << primes.size() << " Biggest prime so far: " << primes.back() << '\n';
+	//			//}
+	//		}
+	//	}
+	//}
+	//auto end_time = std::chrono::high_resolution_clock::now();
+
+	//std::cout << "Par time : " << benchmark([primes]() { std::for_each(std::execution::par, primes.begin(), primes.end(), [](const auto p) { std::cout << std::to_string(p) + '\n'; }); });
 
 
 
@@ -102,24 +116,4 @@ int main()
 
 
 }
-
-
-
-//void add_primes_in_range(std::vector<int>& primes, int start, int end)
-//{
-//	for (int i = start; i < end; i += 6)
-//	{
-//		for (int j = -1; j <= 1; j += 2)
-//		{
-//			if (no_common_factors(i + j, primes))
-//			{
-//				primes.push_back(i + j);
-//				if (primes.size() % 1'000'000 == 0)
-//				{
-//					std::cout << primes.size() << " Biggest prime so far: " << primes.back() << '\n';
-//				}
-//			}
-//		}
-//	}
-//}
 
