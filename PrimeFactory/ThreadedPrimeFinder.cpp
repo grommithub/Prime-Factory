@@ -77,7 +77,9 @@ std::vector<int> ThreadedPrimeFinder::find_all_primes(const int up_to)
 				smallest_unchecked_number = end + 1;
 			}
 
+#if _DEBUG
 			std::cout << "Making thread for: " << start << " -> " << end << std::endl;
+#endif
 
 			auto thread = std::thread([i, &prime_chunks_promises, primes, smallest_unchecked_number, start, end]()
 				{
