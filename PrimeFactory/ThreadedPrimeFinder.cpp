@@ -4,6 +4,8 @@
 #include <thread>
 #include <future>
 #include <iostream>
+#include <string>
+
 using namespace ThreadedPrimeFinder;
 
 
@@ -39,19 +41,28 @@ std::vector<int> ThreadedPrimeFinder::find_all_primes(const int up_to)
 	auto num_of_threads = std::thread::hardware_concurrency();
 
 
+	std::vector<std::thread> threads(num_of_threads);
+
+	std::cout << "Using " << num_of_threads << " threads\n";
+
 	while (smallest_unchecked_number < up_to)
 	{
-		int biggest_prime_squared = std::min(primes.back() * primes.back(), up_to);
+		int biggest_prime_squared = 0;
+		if (primes.back() < sqrt(INT32_MAX))
+		{
+			biggest_prime_squared = std::min(primes.back() * primes.back(), up_to);
+		}
+		else
+		{
+			biggest_prime_squared = up_to;
+		}
 
-		std::vector<std::thread> threads;
+
 
 		std::vector<std::promise<std::vector<int>>> prime_chunks_promises(num_of_threads);
 		std::vector<std::future<std::vector<int>>> prime_chunks(num_of_threads);
 
-		int chunk_size = biggest_prime_squared / smallest_unchecked_number;
-
-		std::cout << "NOW CHECKING UP TO " << biggest_prime_squared << std::endl;
-
+		int chunk_size = (biggest_prime_squared - smallest_unchecked_number) / num_of_threads;
 
 		for (int i = 0; i < num_of_threads; i++)
 		{
@@ -63,16 +74,17 @@ std::vector<int> ThreadedPrimeFinder::find_all_primes(const int up_to)
 			if (i == num_of_threads - 1)
 			{
 				end = biggest_prime_squared;
-				smallest_unchecked_number = end;
+				smallest_unchecked_number = end + 1;
 			}
+
+			std::cout << "Making thread for: " << start << " -> " << end << std::endl;
 
 			auto thread = std::thread([i, &prime_chunks_promises, primes, smallest_unchecked_number, start, end]()
 				{
 					std::vector<int> result = find_primes_in_range(start, end, primes);
 					prime_chunks_promises[i].set_value(result);
 				});
-			thread.detach();
-			threads.push_back(std::move(thread));
+			threads[i] = (std::move(thread));
 		}
 
 		for (auto& thread : threads)
@@ -86,13 +98,10 @@ std::vector<int> ThreadedPrimeFinder::find_all_primes(const int up_to)
 		for (auto& prime_chunk : prime_chunks)
 		{
 			auto chunk = prime_chunk.get();
-			if (&prime_chunk == &prime_chunks.back())
-			{
-				int a = 0;
-			}
 			primes.insert(primes.end(), chunk.begin(), chunk.end());
 
 		}
+
 
 	}
 	return primes;
