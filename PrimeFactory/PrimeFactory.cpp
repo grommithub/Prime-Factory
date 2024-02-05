@@ -36,7 +36,7 @@ std::string readable_time(double time)
 }
 
 
-constexpr int UP_TO = 1'000'000'000;
+constexpr int UP_TO = 100'000'000;
 
 int main()
 {
@@ -63,7 +63,17 @@ int main()
 				primes = ThreadedPrimeFinder::find_all_primes(UP_TO);
 			}
 		).count()) << '\n';
+
+		//auto check = ThreadedPrimeFinder::find_primes_single_thread(UP_TO);
+
+	/*	std::vector<int> diff;*/
+
+		//std::set_difference(primes.begin(), primes.end(), check.begin(), check.end(), std::inserter(diff, diff.begin()));
+
+		//std::sort(diff.begin(), diff.end());
+		
 		std::cout << "Primes found:" << primes.size() << '\n';	
+		
 	}
 
 }
