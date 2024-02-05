@@ -9,18 +9,40 @@
 using namespace ThreadedPrimeFinder;
 
 
+std::vector<int> ThreadedPrimeFinder::find_primes_single_thread(const int up_to)
+{
+	{
+		std::vector<int> primes = { 2, 3 };
+
+		for (int i = 6; i < up_to; i += 6)
+		{
+			for (int j = -1; j <= 1; j += 2)
+			{
+				if (no_common_factors(i + j, primes))
+				{
+					primes.push_back(i + j);
+				}
+			}
+		}
+
+		return primes;
+	}
+}
+
 std::vector<int> ThreadedPrimeFinder::find_primes_in_range(int start, int end, const std::vector<int>& known_primes)
 {
 	std::vector<int> primes;
 
-	for (int i = start; i < end; i++)
+	start += 6 - (start % 6);
+
+	for (int i = start; i < end; i += 6)
 	{
-		if (i % 6 != 1 && i % 6 != 5) continue;
-
-
-		if (no_common_factors(i, known_primes))
+		for (int j = -1; j <= 1; j += 2)
 		{
-			primes.push_back(i);
+			if (no_common_factors(i + j, known_primes))
+			{
+				primes.push_back(i + j);
+			}
 		}
 	}
 
@@ -30,11 +52,7 @@ std::vector<int> ThreadedPrimeFinder::find_primes_in_range(int start, int end, c
 std::vector<int> ThreadedPrimeFinder::find_all_primes(const int up_to)
 {
 
-	std::vector<int> primes;
-
-	if (up_to >= 2) primes.push_back(2);
-	if (up_to >= 3) primes.push_back(3);
-
+	std::vector<int> primes = find_primes_single_thread(std::min(up_to, 1'000'000));
 
 	int smallest_unchecked_number = primes.back() + 2;
 
@@ -78,7 +96,7 @@ std::vector<int> ThreadedPrimeFinder::find_all_primes(const int up_to)
 			}
 
 #if _DEBUG
-			std::cout << "Making thread for: " << start << " -> " << end << std::endl;
+			std::cout << "Making thread for: " << start << " -> " << end << " Size: " << end - start << std::endl;
 #endif
 
 			auto thread = std::thread([i, &prime_chunks_promises, primes, smallest_unchecked_number, start, end]()
@@ -110,7 +128,7 @@ std::vector<int> ThreadedPrimeFinder::find_all_primes(const int up_to)
 
 }
 
-bool ThreadedPrimeFinder::no_common_factors(int num, const std::vector<int>& primes)
+bool no_common_factors(int num, const std::vector<int>& primes)
 {
 	return std::none_of(primes.begin(), std::find_if(primes.begin(), primes.end(), [num](auto a) { return a * a > num; }), [num](unsigned int a) { return num % a == 0; });
 }
