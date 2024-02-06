@@ -53,14 +53,9 @@ std::vector<int> ThreadedPrimeFinder::find_primes_in_range(int start, int end, c
 
 std::vector<int> ThreadedPrimeFinder::calculate_primes_horizontally(int start, int end, int thread_count, int thread_index, const std::vector<int>& known_primes)
 {
+	start += 6 - (start % 6) + 6 * thread_index;
+
 	std::vector<int> primes;
-
-	start += 6 - (start % 6);
-	start += 6 * thread_index;
-
-	std::cout << "Start for thread " + std::to_string(thread_index) + ": " + std::to_string(start) + '\n';
-
-
 	for (int i = start; i < end; i += 6 * thread_count)
 	{
 		for (int j = -1; j <= 1; j += 2)
@@ -80,9 +75,10 @@ std::vector<int> ThreadedPrimeFinder::calculate_primes_horizontally(int start, i
 std::vector<int> ThreadedPrimeFinder::find_all_primes(const int up_to)
 {
 
-	std::vector<int> primes = find_primes_single_thread(std::min(up_to, 10));
+	//Using a single core seems to be faster up to ~1.5 million on my machine
+	std::vector<int> primes = find_primes_single_thread(std::min(up_to, 1'000'000));
 
-	int smallest_unchecked_number = primes.back() + 2;
+	int smallest_unchecked_number = primes.back() + 1;
 
 	auto num_of_threads = std::thread::hardware_concurrency();
 
@@ -129,6 +125,26 @@ std::vector<int> ThreadedPrimeFinder::find_all_primes(const int up_to)
 
 		smallest_unchecked_number = biggest_prime_squared;
 
+
+		std::vector<int> new_primes;
+
+
+
+#if _DEBUG
+		int chunk_index = 0;
+#endif // _DEBUG
+		for (auto& prime_chunk : prime_chunks)
+		{
+#if _DEBUG
+
+			std::cout << "Merging " << chunk_index << '\n';
+			chunk_index++;
+#endif // 0
+			auto chunk = prime_chunk.get();
+			primes.resize(primes.size() + chunk.size());
+			std::merge(primes.begin(), primes.begin() + primes.size() - chunk.size(), chunk.begin(), chunk.end(), primes.begin());
+		}
+
 		for (auto& thread : threads)
 		{
 			if (thread.joinable())
@@ -137,18 +153,8 @@ std::vector<int> ThreadedPrimeFinder::find_all_primes(const int up_to)
 			}
 		}
 
-		std::vector<int> new_primes;
 
-		for (auto& prime_chunk : prime_chunks)
-		{
-			auto chunk = prime_chunk.get();
-			new_primes.insert(new_primes.end(), chunk.begin(), chunk.end());
-		}
 
-		std::sort(std::execution::par, new_primes.begin(), new_primes.end());
-		primes.insert(primes.end(), new_primes.begin(), new_primes.end());
-		
-		
 	}
 	return primes;
 

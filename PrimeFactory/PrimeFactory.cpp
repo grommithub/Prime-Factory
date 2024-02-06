@@ -36,7 +36,7 @@ std::string readable_time(double time)
 }
 
 
-constexpr int UP_TO = 100'000'000;
+constexpr int UP_TO = 1'000'000'000;
 
 int main()
 {
@@ -75,6 +75,8 @@ int main()
 		std::cout << "Primes found:" << primes.size() << '\n';	
 		
 	}
+
+	system("pause");
 
 }
 
