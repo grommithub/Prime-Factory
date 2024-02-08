@@ -17,7 +17,7 @@
 
 #include "ThreadedPrimeFinder.h"
 
-constexpr int UP_TO = 100'000'000;
+constexpr int UP_TO = 1'000'000'000;
 
 
 std::chrono::duration<double> benchmark(std::function<void(void)> func)
@@ -37,34 +37,34 @@ std::string readable_time(double time)
 
 int main()
 {
-
-
 	{
 		std::vector<int> primes;
+		
+		std::cout << "Finding primes up to " << UP_TO << '\n';
 
-		std::cout << "\nSingle core:" << readable_time(benchmark(
+		std::cout << "\nSingle core: " << readable_time(benchmark(
 			[&primes]()
 			{
 				primes = PrimeFinder::find_primes_single_thread(UP_TO);
 			}
 		).count()) << '\n';
-		std::cout << "Primes found:" << primes.size() << "\n\n";
+		std::cout << "Primes found: " << primes.size() << "\n\n";
 	}
 
-	{
-		std::vector<int> primes;
+	//{
+	//	std::vector<int> primes;
 
-		std::cout << "Threaded: " << readable_time(benchmark(
-			[&primes]()
-			{
-				primes = PrimeFinder::find_all_primes(UP_TO);
-			}
-		).count()) << '\n';
+	//	std::cout << "Threaded: " << readable_time(benchmark(
+	//		[&primes]()
+	//		{
+	//			primes = PrimeFinder::find_all_primes(UP_TO);
+	//		}
+	//	).count()) << '\n';
 
-		
-		std::cout << "Primes found:" << primes.size() << '\n';	
-		
-	}
+	//	
+	//	std::cout << "Primes found: " << primes.size() << '\n';	
+	//	
+	//}
 
 	system("pause");
 

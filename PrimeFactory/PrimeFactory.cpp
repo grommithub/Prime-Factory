@@ -13,22 +13,20 @@ using namespace PrimeFinder;
 
 std::vector<int> PrimeFinder::find_primes_single_thread(const int up_to)
 {
-	{
-		std::vector<int> primes = { 2, 3 };
+	std::vector<int> primes = { 2, 3 };
 
-		for (int i = 6; i < up_to; i += 6)
+	for (int i = 6; i < up_to; i += 6)
+	{
+		for (int j = -1; j <= 1; j += 2)
 		{
-			for (int j = -1; j <= 1; j += 2)
+			if (no_common_factors(i + j, primes))
 			{
-				if (no_common_factors(i + j, primes))
-				{
-					primes.push_back(i + j);
-				}
+				primes.push_back(i + j);
 			}
 		}
-
-		return primes;
 	}
+
+	return primes;
 }
 
 std::vector<int> PrimeFinder::find_primes_in_range(int start, int end, const std::vector<int>& known_primes)
@@ -160,6 +158,6 @@ std::vector<int> PrimeFinder::find_all_primes(const int up_to)
 
 bool PrimeFinder::no_common_factors(int num, const std::vector<int>& primes)
 {
-	return std::none_of(primes.begin(), std::find_if(primes.begin(), primes.end(), [num](auto a) { return a * a > num; }), [num](unsigned int a) { return num % a == 0; });
+	auto biggest_prime_to_check = std::find_if(primes.begin(), primes.end(), [num](auto a) { return a * a > num; });
+	return std::none_of(primes.begin(), biggest_prime_to_check, [num](unsigned int a) { return num % a == 0; });
 }
-
