@@ -9,7 +9,7 @@
 using namespace PrimeFinder;
 
 
-std::vector<int> PrimeFinder::find_primes_single_thread(const int up_to)
+std::vector<int> PrimeFinder::find_primes_single_thread(int up_to)
 {
 	if (up_to < 2) return std::vector<int>();
 	if (up_to == 3) return std::vector<int> { 2 };
