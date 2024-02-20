@@ -3,22 +3,14 @@
 
 #include <iostream>
 #include <vector>
-#include <algorithm>
 #include <chrono>
-
-#include <thread>
-#include <mutex>
-#include "PrimeFactory.h"
-#include <execution>
 
 #include <functional>
 #include <string>
 
+#include "PrimeFactory.h"
 
-#include "ThreadedPrimeFinder.h"
-
-constexpr int UP_TO = 1'000'000'000;
-
+constexpr int UP_TO = 100'000'000;
 
 std::chrono::duration<double> benchmark(std::function<void(void)> func)
 {
@@ -28,46 +20,54 @@ std::chrono::duration<double> benchmark(std::function<void(void)> func)
 	return std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 }
 
-
 std::string readable_time(double time)
 {
 	return std::to_string((int)time / 60) + ':' + std::to_string(fmod(time, 60.0));
 }
 
+void benchmark_multi_thread()
+{
+	std::vector<int> primes;
+
+	std::cout << "Threaded: " << readable_time(benchmark(
+		[&primes]()
+		{
+			primes = PrimeFinder::find_all_primes(UP_TO);
+		}
+	).count()) << '\n';
+
+
+	std::cout << "Primes found: " << primes.size() << "\n\n";
+}
+
+void benchmark_single_thread()
+{
+	std::vector<int> primes;
+
+	std::cout << "Single core: " << readable_time(benchmark(
+		[&primes]()
+		{
+			primes = PrimeFinder::find_primes_single_thread(UP_TO);
+		}
+	).count()) << '\n';
+	std::cout << "Primes found: " << primes.size() << "\n\n";
+}
 
 int main()
 {
-	{
-		std::vector<int> primes;
-		
-		std::cout << "Finding primes up to " << UP_TO << '\n';
 
-		std::cout << "\nSingle core: " << readable_time(benchmark(
-			[&primes]()
-			{
-				primes = PrimeFinder::find_primes_single_thread(UP_TO);
-			}
-		).count()) << '\n';
-		std::cout << "Primes found: " << primes.size() << "\n\n";
-	}
+#if _DEBUG
+	std::cout << "[Running in debug mode. Compiling to release will significantly boost performance]\n\n";
+#endif
 
-	//{
-	//	std::vector<int> primes;
+	std::cout << "Finding primes up to " << UP_TO << "\n\n";
 
-	//	std::cout << "Threaded: " << readable_time(benchmark(
-	//		[&primes]()
-	//		{
-	//			primes = PrimeFinder::find_all_primes(UP_TO);
-	//		}
-	//	).count()) << '\n';
+	benchmark_single_thread();
+	
+	benchmark_multi_thread();
 
-	//	
-	//	std::cout << "Primes found: " << primes.size() << '\n';	
-	//	
-	//}
 
 	system("pause");
 
 	return 0;
 }
-

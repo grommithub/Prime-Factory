@@ -1,18 +1,19 @@
-#include "ThreadedPrimeFinder.h"
+#include "PrimeFactory.h"
 
 #include <algorithm>
 #include <thread>
 #include <future>
-#include <iostream>
-#include <string>
 
-#include <execution>
+#include <iostream>
 
 using namespace PrimeFinder;
 
 
 std::vector<int> PrimeFinder::find_primes_single_thread(const int up_to)
 {
+	if (up_to < 2) return std::vector<int>();
+	if (up_to == 3) return std::vector<int> { 2 };
+
 	std::vector<int> primes = { 2, 3 };
 
 	for (int i = 6; i < up_to; i += 6)
@@ -29,27 +30,8 @@ std::vector<int> PrimeFinder::find_primes_single_thread(const int up_to)
 	return primes;
 }
 
-std::vector<int> PrimeFinder::find_primes_in_range(int start, int end, const std::vector<int>& known_primes)
-{
-	std::vector<int> primes;
 
-	start += 6 - (start % 6);
-
-	for (int i = start; i < end; i += 6)
-	{
-		for (int j = -1; j <= 1; j += 2)
-		{
-			if (no_common_factors(i + j, known_primes))
-			{
-				primes.push_back(i + j);
-			}
-		}
-	}
-
-	return primes;
-}
-
-std::vector<int> PrimeFinder::calculate_primes_horizontally(int start, int end, int thread_count, int thread_index, const std::vector<int>& known_primes)
+std::vector<int> PrimeFinder::find_primes_offset_by_thread(int start, int end, int thread_count, int thread_index, const std::vector<int>& known_primes)
 {
 	start += 6 - (start % 6) + 6 * thread_index;
 
@@ -70,56 +52,47 @@ std::vector<int> PrimeFinder::calculate_primes_horizontally(int start, int end, 
 
 
 
-std::vector<int> PrimeFinder::find_all_primes(const int up_to)
+std::vector<int> PrimeFinder::find_all_primes(int up_to)
 {
+	//Using a single thread seems to be faster up to ~1.5 million on my machine
+	constexpr int single_core_up_to = 1'000'000;
+	std::vector<int> primes = find_primes_single_thread(std::min(up_to, single_core_up_to));
 
-	//Using a single core seems to be faster up to ~1.5 million on my machine
-	std::vector<int> primes = find_primes_single_thread(std::min(up_to, 1'000'000));
 	auto num_of_threads = std::thread::hardware_concurrency();
-
-	int smallest_unchecked_number = primes.back() + 1;
-
 	std::vector<std::thread> threads(num_of_threads);
 
 	std::cout << "Using " << num_of_threads << " threads\n";
 
+	int smallest_unchecked_number = single_core_up_to + 1;
+
 	while (smallest_unchecked_number < up_to)
 	{
-		int biggest_prime_squared = 0;
-		if (primes.back() < sqrt(INT32_MAX))
+		int temp_up_to = up_to;
+		if (primes.back() < sqrt(up_to))
 		{
-			biggest_prime_squared = std::min(primes.back() * primes.back(), up_to);
+			temp_up_to = primes.back() * primes.back();
 		}
-		else
-		{
-			biggest_prime_squared = up_to;
-		}
-
-
 
 		std::vector<std::promise<std::vector<int>>> prime_chunks_promises(num_of_threads);
 		std::vector<std::future<std::vector<int>>> prime_chunks(num_of_threads);
 
-		for (int i = 0; i < num_of_threads; i++)
+		for (int thread_index = 0; thread_index < num_of_threads; thread_index++)
 		{
-			std::future<std::vector<int>> primes_future = prime_chunks_promises[i].get_future();
-			prime_chunks[i] = std::move(primes_future);
+			std::future<std::vector<int>> primes_future = prime_chunks_promises[thread_index].get_future();
+			prime_chunks[thread_index] = std::move(primes_future);
 
 			int start = smallest_unchecked_number;
-			int end = biggest_prime_squared;
-#if _DEBUG
-			std::cout << "Making thread for: " << start << " -> " << end << " Size: " << end - start << std::endl;
-#endif
+			int end = temp_up_to;
 
-			auto thread = std::thread([i, &prime_chunks_promises, primes, smallest_unchecked_number, start, end, num_of_threads]()
+			auto thread = std::thread([thread_index, &prime_chunks_promises, primes, smallest_unchecked_number, start, end, num_of_threads]()
 				{
-					std::vector<int> result = calculate_primes_horizontally(start, end, num_of_threads, i, primes);
-					prime_chunks_promises[i].set_value(result);
+					std::vector<int> result = find_primes_offset_by_thread(start, end, num_of_threads, thread_index, primes);
+					prime_chunks_promises[thread_index].set_value(result);
 				});
-			threads[i] = (std::move(thread));
+			threads[thread_index] = (std::move(thread));
 		}
 
-		smallest_unchecked_number = biggest_prime_squared;
+		smallest_unchecked_number = temp_up_to;
 
 		for (auto& thread : threads)
 		{
@@ -129,28 +102,13 @@ std::vector<int> PrimeFinder::find_all_primes(const int up_to)
 			}
 		}
 
-		std::vector<int> new_primes;
-
-
-
-#if _DEBUG
-		int chunk_index = 0;
-#endif // _DEBUG
+		size_t new_primes_first_index = primes.size();
 		for (auto& prime_chunk : prime_chunks)
 		{
-#if _DEBUG
-
-			std::cout << "Merging " << chunk_index << '\n';
-			chunk_index++;
-#endif // 0
 			auto chunk = prime_chunk.get();
 			primes.resize(primes.size() + chunk.size());
-			std::merge(primes.begin(), primes.begin() + primes.size() - chunk.size(), chunk.begin(), chunk.end(), primes.begin());
+			std::merge(primes.begin() + new_primes_first_index, primes.begin() + primes.size() - chunk.size(), chunk.begin(), chunk.end(), primes.begin());
 		}
-
-
-
-
 	}
 	return primes;
 
