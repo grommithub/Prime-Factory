@@ -22,7 +22,8 @@ std::chrono::duration<double> benchmark(std::function<void(void)> func)
 
 std::string readable_time(double time)
 {
-	return std::to_string((int)time / 60) + ':' + std::to_string(fmod(time, 60.0));
+	auto seconds_leading_zero = time - ((int)time / 60) < 10 ? "0" : "";
+	return std::to_string((int)time / 60) + ':' + seconds_leading_zero + std::to_string(fmod(time, 60.0));
 }
 
 void benchmark_multi_thread()
@@ -44,7 +45,7 @@ void benchmark_single_thread()
 {
 	std::vector<int> primes;
 
-	std::cout << "Single core: " << readable_time(benchmark(
+	std::cout << "Single thread: " << readable_time(benchmark(
 		[&primes]()
 		{
 			primes = PrimeFinder::find_primes_single_thread(UP_TO);

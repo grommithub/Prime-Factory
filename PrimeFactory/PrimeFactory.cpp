@@ -30,7 +30,6 @@ std::vector<int> PrimeFinder::find_primes_single_thread(int up_to)
 	return primes;
 }
 
-
 std::vector<int> PrimeFinder::find_primes_offset_by_thread(int start, int end, int thread_count, int thread_index, const std::vector<int>& known_primes)
 {
 	start += 6 - (start % 6) + 6 * thread_index;
