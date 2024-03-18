@@ -51,7 +51,7 @@ std::vector<int> PrimeFinder::find_primes_offset_by_thread(int start, int end, i
 
 
 
-std::vector<int> PrimeFinder::find_all_primes(int up_to)
+std::vector<int> PrimeFinder::find_primes_threaded(int up_to)
 {
 	//Using a single thread seems to be faster up to ~1.5 million on my machine
 	constexpr int single_core_up_to = 1'000'000;

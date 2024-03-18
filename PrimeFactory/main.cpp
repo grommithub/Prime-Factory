@@ -33,7 +33,7 @@ void benchmark_multi_thread()
 	std::cout << "Threaded: " << readable_time(benchmark(
 		[&primes]()
 		{
-			primes = PrimeFinder::find_all_primes(UP_TO);
+			primes = PrimeFinder::find_primes_threaded(UP_TO);
 		}
 	).count()) << '\n';
 
@@ -64,10 +64,9 @@ int main()
 	std::cout << "Finding primes up to " << UP_TO << "\n\n";
 
 	benchmark_single_thread();
-	
+	system("pause");
+
 	benchmark_multi_thread();
-
-
 	system("pause");
 
 	return 0;
