@@ -10,7 +10,7 @@
 
 #include "PrimeFactory.h"
 
-constexpr int UP_TO = 100'000'000;
+constexpr int UP_TO = 1'000'000'000;
 
 std::chrono::duration<double> benchmark(std::function<void(void)> func)
 {
@@ -20,13 +20,26 @@ std::chrono::duration<double> benchmark(std::function<void(void)> func)
 	return std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 }
 
-std::string readable_time(double time)
+inline std::string readable_time(double time)
 {
 	auto seconds_leading_zero = time - ((int)time / 60) < 10 ? "0" : "";
 	return std::to_string((int)time / 60) + ':' + seconds_leading_zero + std::to_string(fmod(time, 60.0));
 }
 
-void benchmark_multi_thread()
+inline void benchmark_single_thread()
+{
+	std::vector<int> primes;
+
+	std::cout << "Single thread: " << readable_time(benchmark(
+		[&primes]()
+		{
+			primes = PrimeFinder::find_primes_single_thread(UP_TO);
+		}
+	).count()) << '\n';
+	std::cout << "Primes found: " << primes.size() << "\n\n";
+}
+
+inline void benchmark_multi_thread()
 {
 	std::vector<int> primes;
 
@@ -41,18 +54,6 @@ void benchmark_multi_thread()
 	std::cout << "Primes found: " << primes.size() << "\n\n";
 }
 
-void benchmark_single_thread()
-{
-	std::vector<int> primes;
-
-	std::cout << "Single thread: " << readable_time(benchmark(
-		[&primes]()
-		{
-			primes = PrimeFinder::find_primes_single_thread(UP_TO);
-		}
-	).count()) << '\n';
-	std::cout << "Primes found: " << primes.size() << "\n\n";
-}
 
 int main()
 {
@@ -64,7 +65,6 @@ int main()
 	std::cout << "Finding primes up to " << UP_TO << "\n\n";
 
 	benchmark_single_thread();
-	system("pause");
 
 	benchmark_multi_thread();
 	system("pause");
